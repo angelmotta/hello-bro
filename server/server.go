@@ -1,18 +1,20 @@
 package server
 
 import (
+	"io"
 	"log"
 	"net"
 	"sync"
 )
 
+// Server is a TCP Server
 type Server struct {
 	listener net.Listener
 	quitChan chan interface{} // channel that's used to signal shutdown
 	wg       sync.WaitGroup   // WaitGroup to wait until all the server's goroutines are actually done.
 }
 
-// NewServer works a Server's constructor
+// NewServer function works as Server's constructor
 func NewServer(addr string) *Server {
 	s := &Server{
 		quitChan: make(chan interface{}),
@@ -29,6 +31,8 @@ func NewServer(addr string) *Server {
 	go s.serve() // Server listens for new connections in a background goroutine
 	return s
 }
+
+// serve method is the main goroutine of a Server (It accepts new connections and handle requests)
 func (s *Server) serve() {
 	defer s.wg.Done()
 
@@ -40,7 +44,7 @@ func (s *Server) serve() {
 		if err != nil {
 			// check quitChan channel in a non-blocking way
 			select {
-			case <-s.quitChan: // this means the error is caused by the Stop() method
+			case <-s.quitChan: // this means the error is intentionally caused by the Stop() method
 				return // With this return serve() notifies the WaitGroup that it's done
 			default:
 				log.Println("listener.Accept() error", err)
@@ -56,9 +60,35 @@ func (s *Server) serve() {
 	}
 }
 
+// handleConnection process client request
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	// TODO
+
+	buf := make([]byte, 2048)
+	for {
+		n, err := conn.Read(buf)
+		log.Println("conn.Read(buf) operation done")
+		if err != nil && err != io.EOF {
+			log.Println("conn.Read error", err)
+		}
+
+		if n == 0 {
+			// request processing completed
+			log.Println("Request processing completed")
+			return
+		}
+	}
+}
+
+func (s *Server) handleConnectionEcho(c net.Conn) {
+	// Echo all incoming Data as a response for the client
+	// io.Copy copies from src to dst until EOF is reached on src (e.g. Until 'quit' is sent via telnet)
+	if _, err := io.Copy(c, c); err != nil {
+		log.Fatal("issue with io.Copy echo", err)
+	}
+	// Shut down the connection
+	log.Println("...client disconnected")
+	c.Close()
 }
 
 // Stop tells the server to shut down gracefully: until all the handlers have returned
