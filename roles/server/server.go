@@ -10,7 +10,7 @@ import (
 
 // Server is a TCP Server
 type Server struct {
-	listener net.Listener
+	Listener net.Listener
 	quitChan chan interface{} // channel that's used to signal shutdown
 	wg       sync.WaitGroup   // WaitGroup to wait until all the server's goroutines are actually done.
 }
@@ -26,7 +26,7 @@ func NewServer(addr string) *Server {
 		log.Fatal(err)
 	}
 	// Assign listener to the new server
-	s.listener = l
+	s.Listener = l
 	s.wg.Add(1)
 	// Start main goroutine for the new Server
 	go s.serve() // Server listens for new connections in a background goroutine
@@ -41,7 +41,7 @@ func (s *Server) serve() {
 		// Wait for a connection
 		log.Println("Waiting for a new connection...")
 		// Listener's Accept waits for and return the next connection to the listener
-		conn, err := s.listener.Accept() // blocking operation
+		conn, err := s.Listener.Accept() // blocking operation
 		if err != nil {
 			// check quitChan channel in a non-blocking way
 			select {
@@ -85,6 +85,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		b.WriteString(hello)
 		b.Write(buf)
 		dataPayload := b.String()
+		log.Println("data to be send to the client", dataPayload)
 		response := []byte(dataPayload)
 		// Send response & reset buffer
 		conn.Write(response)
@@ -107,6 +108,6 @@ func (s *Server) handleConnectionEcho(c net.Conn) {
 func (s *Server) Stop() {
 	close(s.quitChan) // any subsequent receive from a closed channel (<-s.quitChan) will succeed
 	// Stop accepting new clients.
-	s.listener.Close() // This will cause the listener.Accept() throws an error and Serve method return quietly
+	s.Listener.Close() // This will cause the listener.Accept() throws an error and Serve method return quietly
 	s.wg.Wait()        // This operation will block until all the handlers have returned
 }
