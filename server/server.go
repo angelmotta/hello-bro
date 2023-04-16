@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -19,12 +20,12 @@ func NewServer(addr string) *Server {
 	s := &Server{
 		quitChan: make(chan interface{}),
 	}
-	// Initialize and assign listener in Server
+	// Initialize a listener for the new Server
 	l, err := net.Listen("tcp", addr) // addr: "<ip>:<port>"
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// Assign listener to the new server
 	s.listener = l
 	s.wg.Add(1)
 	// Start main goroutine for the new Server
@@ -55,28 +56,39 @@ func (s *Server) serve() {
 			go func() {
 				s.handleConnection(conn)
 				s.wg.Done()
+				log.Println("Connection closed")
 			}()
 		}
 	}
 }
 
-// handleConnection process client request
+// handleConnection process client requests
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	buf := make([]byte, 2048)
+	hello := "Hello bro, did you say: "
+	var b strings.Builder
 	for {
-		n, err := conn.Read(buf)
-		log.Println("conn.Read(buf) operation done")
+		log.Println("Waiting for new incoming data...")
+		n, err := conn.Read(buf) // block operation
+		log.Println("Read-op done")
 		if err != nil && err != io.EOF {
 			log.Println("conn.Read error", err)
 		}
-
 		if n == 0 {
-			// request processing completed
-			log.Println("Request processing completed")
-			return
+			log.Println("handleConnection completed")
+			return // handleConnection() method is done
 		}
+
+		// Prepare response
+		b.WriteString(hello)
+		b.Write(buf)
+		dataPayload := b.String()
+		response := []byte(dataPayload)
+		// Send response & reset buffer
+		conn.Write(response)
+		b.Reset()
 	}
 }
 
