@@ -12,6 +12,10 @@ import (
 func main() {
 	log.Println("*** Hello bro started ***")
 
+	// Load Global Configuration
+	//GlobalConf.Load()
+	//fmt.Println(GlobalConf.ProxyAddr)
+
 	s := server.NewServer("192.168.1.2:2000")
 
 	// Start client
