@@ -10,18 +10,20 @@ import (
 
 // Server is a TCP Server
 type Server struct {
-	Listener net.Listener
-	quitChan chan interface{} // channel that's used to signal shutdown
-	wg       sync.WaitGroup   // WaitGroup to wait until all the server's goroutines are actually done.
+	Listener   net.Listener
+	quitChan   chan interface{} // channel that's used to signal shutdown
+	wg         sync.WaitGroup   // WaitGroup to wait until all the server's goroutines are actually done.
+	ServerAddr string
 }
 
 // NewServer function works as Server's constructor
 func NewServer(addr string) *Server {
 	s := &Server{
-		quitChan: make(chan interface{}),
+		quitChan:   make(chan interface{}),
+		ServerAddr: addr,
 	}
 	// Initialize a listener for the new Server
-	l, err := net.Listen("tcp", addr) // addr: "<ip>:<port>"
+	l, err := net.Listen("tcp", s.ServerAddr) // addr: "<ip>:<port>"
 	if err != nil {
 		log.Fatal(err)
 	}
