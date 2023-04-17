@@ -12,16 +12,19 @@ import (
 func main() {
 	log.Println("*** Hello bro started ***")
 
-	s := server.NewServer("192.168.1.4:2000")
+	s := server.NewServer("192.168.1.2:2000")
 
 	// Start client
 	//go startFastClient(s.Listener.Addr())
 	c := client.NewClient(s.ServerAddr)
-	c.SendAndBye()
+	c.SendRequest()
 
 	// Test outside this program before stop the server
-	time.Sleep(time.Minute * 2)
-	log.Println("Calling Server's Stop method")
+	log.Println("Sleep time: waiting...")
+	time.Sleep(time.Second * 15)
+	// Client close connection
+	c.CloseConn()
+	// Server stop service
 	s.Stop()
 	log.Println("*** Hello bro finished ***")
 }
@@ -36,7 +39,7 @@ func startFastClient(svrAddr net.Addr) {
 		log.Fatal("error net.Dial-op", err)
 	}
 	defer conn.Close()
-	// Send message
+	// Send message to the server
 	n, err := fmt.Fprintf(conn, "hello bro")
 	if err != nil {
 		log.Fatal("error client write-op", err)

@@ -48,9 +48,9 @@ func (s *Server) serve() {
 			// check quitChan channel in a non-blocking way
 			select {
 			case <-s.quitChan: // this means the error is intentionally caused by the Stop() method
-				return // With this return serve() notifies the WaitGroup that it's done
+				return // With this return, serve() notifies the WaitGroup that it's done
 			default:
-				log.Println("listener.Accept() error", err)
+				log.Println("Server listener.Accept() error", err)
 			}
 		} else {
 			log.Println("New connection accepted! Let's handle connection!")
@@ -58,7 +58,7 @@ func (s *Server) serve() {
 			go func() {
 				s.handleConnection(conn)
 				s.wg.Done()
-				log.Println("Connection closed")
+				log.Println("Server - connection to client closed")
 			}()
 		}
 	}
@@ -74,40 +74,43 @@ func (s *Server) handleConnection(conn net.Conn) {
 	for {
 		log.Println("Waiting for new incoming data...")
 		n, err := conn.Read(buf) // block operation
-		log.Println("Read-op done")
 		if err != nil && err != io.EOF {
-			log.Println("conn.Read error", err)
+			log.Println("Server conn.Read error:", err)
 		}
 		if n == 0 {
 			log.Println("handleConnection completed")
 			return // handleConnection() method is done
 		}
-
-		// Prepare response
+		log.Println("Read-op done")
+		// Prepare response for the client
 		b.WriteString(hello)
 		b.Write(buf)
 		dataPayload := b.String()
-		log.Println("data to be send to the client", dataPayload)
 		response := []byte(dataPayload)
 		// Send response & reset buffer
-		conn.Write(response)
+		_, err = conn.Write(response)
+		if err != nil {
+			log.Fatal("error at con.Write")
+		}
+		log.Println("data to be send to the client", dataPayload)
 		b.Reset()
 	}
 }
 
 func (s *Server) handleConnectionEcho(c net.Conn) {
 	// Echo all incoming Data as a response for the client
-	// io.Copy copies from src to dst until EOF is reached on src (e.g. Until 'quit' is sent via telnet)
+	// io.Copy(dst, src) copies from src to dst until EOF is reached on src (e.g. Until 'quit' is sent via telnet)
 	if _, err := io.Copy(c, c); err != nil {
 		log.Fatal("issue with io.Copy echo", err)
 	}
 	// Shut down the connection
-	log.Println("...client disconnected")
 	c.Close()
+	log.Println("...client disconnected")
 }
 
 // Stop tells the server to shut down gracefully: until all the handlers have returned
 func (s *Server) Stop() {
+	log.Println("Server is stopping the service...")
 	close(s.quitChan) // any subsequent receive from a closed channel (<-s.quitChan) will succeed
 	// Stop accepting new clients.
 	s.Listener.Close() // This will cause the listener.Accept() throws an error and Serve method return quietly
