@@ -9,15 +9,15 @@ var GlobalConf Config
 
 type Config struct {
 	// For all roles, the following fields should be filled
-	Role string // svr | cli
-	Id   string
+	Role string // Role: svr | cli
+	Id   string // Id: 0, 1, 2
 
-	// Info about Role svr
-	SvrIp     string
-	ProxyPort string
+	// Info about Server
+	SvrIp     string // SvrIp: "192.168.1.x"
+	ProxyPort string // ProxyPort: "2000"
 
 	// Info about Role cli
-	ProxyAddr string // <SvrIP>:<ProxyPort>
+	ProxyAddr string // ProxyAddr: <SvrIP>:<ProxyPort>
 }
 
 func (c *Config) Load() {

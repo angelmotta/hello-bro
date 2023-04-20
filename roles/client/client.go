@@ -11,13 +11,13 @@ type Client struct {
 	conn       *net.Conn
 }
 
+// NewClient receive the server address to connect as "<ip:port>" Eg."192.168.1.2:2000"
 func NewClient(svrAddr string) *Client {
 	c := &Client{
 		ServerAddr: svrAddr,
 	}
-	// Connect to Server
-	// Dial connects to the address specified
-	conn, err := net.Dial("tcp", svrAddr) // Dial("tcp", "<ip:port>")
+	// Connect to Server: Dial connects to the address specified
+	conn, err := net.Dial("tcp", c.ServerAddr) // Dial("tcp", "<ip:port>")
 	if err != nil {
 		log.Fatal("error net.Dial-op", err)
 	}

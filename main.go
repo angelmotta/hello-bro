@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	. "github.com/angelmotta/hello-bro/internal/config"
 	"github.com/angelmotta/hello-bro/roles/client"
 	"github.com/angelmotta/hello-bro/roles/server"
 	"log"
@@ -13,28 +14,32 @@ func main() {
 	log.Println("*** Hello bro started ***")
 
 	// Load Global Configuration
-	//GlobalConf.Load()
-	//fmt.Println(GlobalConf.ProxyAddr)
-
-	s := server.NewServer("192.168.1.2:2000")
-
-	// Start client
-	//go startFastClient(s.Listener.Addr())
-	c := client.NewClient(s.ServerAddr)
-	c.SendRequest()
-
-	// Test outside this program before stop the server
-	log.Println("Sleep time: waiting...")
-	time.Sleep(time.Second * 15)
-	// Client close connection
-	c.CloseConn()
-	// Server stop service
-	s.Stop()
+	GlobalConf.Load()
+	if GlobalConf.Role == "svr" {
+		log.Println("Hello-Bro Server role")
+		s := server.NewServer("192.168.1.2:2000")
+		log.Println("Hello-Bro Server started")
+		log.Println("Waiting for clients...")
+		time.Sleep(time.Second * 20)
+		log.Println("Hello-Bro server will try to stop")
+		s.Stop()
+		log.Println("Hello-Bro server stopped")
+	} else if GlobalConf.Role == "cli" {
+		log.Println("Hello-Bro Client role")
+		// Start client
+		c := client.NewClient("192.168.1.2:2000")
+		log.Println("Hello-Bro Client started")
+		c.SendRequest()
+		// Client close connection
+		c.CloseConn()
+	} else {
+		log.Println("Looks like no environment variables were given in the input")
+	}
 	log.Println("*** Hello bro finished ***")
 }
 
 // startFastClient starts locally a simple client.
-// First approach to test from the main function how to shut down the server
+// Sample of first approach to test from the main function how to shut down the server
 func startFastClient(svrAddr net.Addr) {
 	log.Println("start FastClient...")
 	// Dial connects to the address specified
